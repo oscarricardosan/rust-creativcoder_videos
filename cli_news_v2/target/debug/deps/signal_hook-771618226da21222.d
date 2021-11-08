@@ -1,9 +1,0 @@
-/media/savnedeveloper/Disco local/Code/savne/Clientes/savne/rust/rust-creativcoder_videos/clinews/target/debug/deps/signal_hook-771618226da21222.rmeta: /home/savnedeveloper/.cargo/registry/src/github.com-1ecc6299db9ec823/signal-hook-0.1.17/src/lib.rs /home/savnedeveloper/.cargo/registry/src/github.com-1ecc6299db9ec823/signal-hook-0.1.17/src/cleanup.rs /home/savnedeveloper/.cargo/registry/src/github.com-1ecc6299db9ec823/signal-hook-0.1.17/src/flag.rs /home/savnedeveloper/.cargo/registry/src/github.com-1ecc6299db9ec823/signal-hook-0.1.17/src/iterator.rs /home/savnedeveloper/.cargo/registry/src/github.com-1ecc6299db9ec823/signal-hook-0.1.17/src/pipe.rs
-
-/media/savnedeveloper/Disco local/Code/savne/Clientes/savne/rust/rust-creativcoder_videos/clinews/target/debug/deps/signal_hook-771618226da21222.d: /home/savnedeveloper/.cargo/registry/src/github.com-1ecc6299db9ec823/signal-hook-0.1.17/src/lib.rs /home/savnedeveloper/.cargo/registry/src/github.com-1ecc6299db9ec823/signal-hook-0.1.17/src/cleanup.rs /home/savnedeveloper/.cargo/registry/src/github.com-1ecc6299db9ec823/signal-hook-0.1.17/src/flag.rs /home/savnedeveloper/.cargo/registry/src/github.com-1ecc6299db9ec823/signal-hook-0.1.17/src/iterator.rs /home/savnedeveloper/.cargo/registry/src/github.com-1ecc6299db9ec823/signal-hook-0.1.17/src/pipe.rs
-
-/home/savnedeveloper/.cargo/registry/src/github.com-1ecc6299db9ec823/signal-hook-0.1.17/src/lib.rs:
-/home/savnedeveloper/.cargo/registry/src/github.com-1ecc6299db9ec823/signal-hook-0.1.17/src/cleanup.rs:
-/home/savnedeveloper/.cargo/registry/src/github.com-1ecc6299db9ec823/signal-hook-0.1.17/src/flag.rs:
-/home/savnedeveloper/.cargo/registry/src/github.com-1ecc6299db9ec823/signal-hook-0.1.17/src/iterator.rs:
-/home/savnedeveloper/.cargo/registry/src/github.com-1ecc6299db9ec823/signal-hook-0.1.17/src/pipe.rs:
