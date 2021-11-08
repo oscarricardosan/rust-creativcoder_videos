@@ -1,0 +1,14 @@
+[package]
+name = "three_demo_lib"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+regex = "1.5.4"
+
+[lib]
+crate-type = ["rlib"]
+# Para que los tests funcionen dee cambiarse el tipo de crate de cdylib a rlib
+# <- Genera una librería dinamica. al ir a target/debug veremos que se genero $lib.so
