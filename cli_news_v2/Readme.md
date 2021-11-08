@@ -5,6 +5,12 @@ Librerías usadas en el proyecto:
 * Colour: para imprimir texto de diferentes colores en laconsola https://docs.rs/colour/0.6.0/colour/
 * Api de prueba: https://newsapi.org/docs/endpoints/top-headlines
 * Serde: framework para serialización y deserialiación de estructuras de datos https://serde.rs/
+* thiserror: Creación de typos de error personalizados de forma rápida y corta https://crates.io/crates/thiserror
+* dotenv: Manejo de variables de entorno https://crates.io/crates/dotenv
+* termimad: Uso de markdown para imprimir en consola https://crates.io/crates/termimad
+
+
+
 
 ##Uso de Cargo add
 
