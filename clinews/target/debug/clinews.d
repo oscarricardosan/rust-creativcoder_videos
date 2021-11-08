@@ -1,0 +1,1 @@
+/media/savnedeveloper/Disco\ local/Code/savne/Clientes/savne/rust/rust-creativcoder_videos/clinews/target/debug/clinews: /media/savnedeveloper/Disco\ local/Code/savne/Clientes/savne/rust/rust-creativcoder_videos/clinews/src/main.rs
