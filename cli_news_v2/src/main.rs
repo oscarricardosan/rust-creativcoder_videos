@@ -5,9 +5,13 @@ use newsapi::{Articles, get_articles};
 use dotenv::dotenv;
 
 fn render_articles(articles: &Articles) {
+    let theme= theme::default();
+    theme.print_text("# Top headlines\n ");
+
     for article in &articles.articles {
-        dark_green!("> {} \n", article.title);
-        yellow!("- {}\n\n", article.url);
+        theme.print_text(&format!("`{}`", article.title));
+        theme.print_text(&format!("> *{}* \n", article.url));
+        theme.print_text("---");
     }
 }
 
