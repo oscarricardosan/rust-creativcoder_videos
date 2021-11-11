@@ -1,0 +1,24 @@
+[package]
+name = "cli_news_v2"
+version = "0.1.0"
+authors = ["oscarricardosan <oscarricardosan@gmail.com>"]
+edition = "2018"
+description = "Aplicación de practica que obtiene las últimas noticias"
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+crossterm = "0.21.0"
+dotenv = "0.15.0"
+newsapi = {path = "./newsapi"}
+termimad = "0.17.1"
+
+[package.metadata.rpm]
+package = "cli_news_v2"
+
+[package.metadata.rpm.cargo]
+buildflags = ["--release"]
+
+[package.metadata.rpm.targets]
+cli_news_v2 = { path = "/usr/bin/cli_news_v2" }
