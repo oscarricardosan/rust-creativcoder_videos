@@ -1,5 +1,4 @@
 use serde::Deserialize;
-use std::error::Error;
 
 #[derive(thiserror::Error, Debug)]
 pub enum NewsApiError{
@@ -20,6 +19,23 @@ pub struct Articles {
 pub struct Article {
     pub title: String,
     pub url: String,
+    pub description: Option<String>,
+}
+
+impl Article {
+
+    pub fn title(&self) -> &str {
+        &self.title
+    }
+
+    pub fn url(&self) -> &str {
+        &self.url
+    }
+
+    pub fn desc(&self) -> Option<&String> {
+        self.description.as_ref()
+    }
+
 }
 
 pub fn get_articles(url: &str) -> Result<Articles, NewsApiError>{

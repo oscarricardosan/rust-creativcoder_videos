@@ -1,0 +1,12 @@
+[package]
+name = "app_news"
+version = "0.1.0"
+authors = ["oscarricardosan <oscarricardosan@gmail.com>"]
+edition = "2018"
+description = "Aplicación de practica que obtiene las últimas noticias con interfaz gráfica"
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+eframe = { version = "*", default-features = false, features = ["default_fonts", "egui_glow"] }
