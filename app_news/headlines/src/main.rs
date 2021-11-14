@@ -1,4 +1,4 @@
-use eframe::egui::{CentralPanel, CtxRef, Rgba, Vec2};
+use eframe::egui::{CentralPanel, CtxRef, Rgba, ScrollArea, Vec2};
 use eframe::epi::{App, Frame, Storage};
 use eframe::{NativeOptions, run_native};
 
@@ -32,11 +32,14 @@ struct NewsCardData {
 impl App for Headlines {
     fn update(&mut self, ctx: &CtxRef, frame: &mut Frame<'_>) {
         CentralPanel::default().show(ctx, |ui| {
-            for new_card in &self.articles {
-                ui.label(&new_card.title);
-                ui.label(&new_card.desc);
-                ui.label(&new_card.url);
-            }
+            //https://docs.rs/egui/0.15.0/egui/containers/struct.ScrollArea.html
+            ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
+                for new_card in &self.articles {
+                    ui.label(&new_card.title);
+                    ui.label(&new_card.desc);
+                    ui.label(&new_card.url);
+                }
+            });
         });
     }
 

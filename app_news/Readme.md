@@ -1,6 +1,9 @@
+https://www.youtube.com/watch?v=NtUkr_z7l84
+
 #Tips
 
 Librerías usadas en el proyecto:
+* Eframe: permite crear aplicaciones con interfaz gráfica GUI https://crates.io/crates/eframe/0.10.0
 * Ureq: para realizar peticiones http https://docs.rs/ureq/0.4.0/ureq
 * Colour: para imprimir texto de diferentes colores en laconsola https://docs.rs/colour/0.6.0/colour/
 * Api de prueba: https://newsapi.org/docs/endpoints/top-headlines
@@ -12,6 +15,18 @@ Librerías usadas en el proyecto:
 
 
 
+##Instalación d paquetes en Linux
+
+Lo primero es instalar lo siguientes paquetes como recomienda eframe, personalmente recomiendo usar el sistema operativo Deian
+~~~
+sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev
+~~~
+Si sigue generando error de cc no link correr el siguiente paquete:
+~~~
+sudo apt install build-essential
+~~~
+
+
 ##Uso de Cargo add
 
 Para instalar paquetes de forma rápida desde consola se puede usar `cargo add` 
@@ -20,7 +35,7 @@ Pero para ello se debe primero instalar cargo-edit desde https://crates.io/crate
 
 Con ello ya puedes instalar los paquetes así:
 
-## Uso de deseriualización
+## Uso de deserialización
 
 Para poder extender una estructura que implemente deserialización debemos poner en Cargo.toml:
 
