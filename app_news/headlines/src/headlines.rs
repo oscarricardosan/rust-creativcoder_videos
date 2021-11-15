@@ -1,8 +1,10 @@
 use std::borrow::Cow;
-use eframe::egui::{Color32, CtxRef, FontDefinitions, FontFamily, Hyperlink, Label, Layout, ScrollArea, Separator, TextStyle, Ui};
+use eframe::egui;
+use eframe::egui::{Button, Color32, CtxRef, FontDefinitions, FontFamily, Hyperlink, Label, Layout, ScrollArea, Separator, TextStyle, Ui};
 use eframe::egui::Align::Min;
+use crate::TopBottomPanel;
 
-const PADDING: f32= 3.0;
+pub const PADDING: f32= 3.0;
 const WHITE: Color32= Color32::from_rgb(255, 255, 255);
 const CYAN: Color32= Color32::from_rgb(0, 255, 255);
 
@@ -92,6 +94,38 @@ impl Headlines {
                 ui.add_space(PADDING);
                 ui.add(Separator::default());
             }
+        });
+    }
+
+    pub fn render_top_panel(&self, ctx: &CtxRef) {
+        TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            ui.add_space(5.);
+            egui::menu::bar(ui, |ui|{
+                //Logo
+                ui.with_layout(
+                    Layout::left_to_right(), |ui|{
+                        ui.add(
+                            Label::new("📕").text_style(egui::TextStyle::Heading)
+                        );
+                    }
+                );
+                //Controls
+                ui.with_layout(
+                    Layout::right_to_left(), |ui|{
+                        let close_btn= ui.add(
+                            Button::new("❌").text_style(TextStyle::Body)
+                        );
+                        let refresh_btn= ui.add(
+                            Button::new("🔄").text_style(TextStyle::Body)
+                        );
+                        let theme_btn= ui.add(
+                            Button::new("🌜").text_style(TextStyle::Body)
+                        );
+                    }
+                );
+
+            });
+            ui.add_space(5.);
         });
     }
 

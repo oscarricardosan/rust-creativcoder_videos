@@ -4,6 +4,7 @@ https://www.youtube.com/watch?v=NtUkr_z7l84
 
 Librerías usadas en el proyecto:
 * Eframe: permite crear aplicaciones con interfaz gráfica GUI https://crates.io/crates/eframe/0.10.0
+  * Elementos disponibles con eframe https://docs.rs/egui/0.15.0/egui/struct.Ui.html
 * Ureq: para realizar peticiones http https://docs.rs/ureq/0.4.0/ureq
 * Colour: para imprimir texto de diferentes colores en laconsola https://docs.rs/colour/0.6.0/colour/
 * Api de prueba: https://newsapi.org/docs/endpoints/top-headlines
