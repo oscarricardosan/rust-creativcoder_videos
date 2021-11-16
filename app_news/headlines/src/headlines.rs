@@ -1,15 +1,38 @@
 use std::borrow::Cow;
 use eframe::egui;
-use eframe::egui::{Button, Color32, CtxRef, FontDefinitions, FontFamily, Hyperlink, Label, Layout, ScrollArea, Separator, TextStyle, Ui};
+use eframe::egui::{Button, Color32, CtxRef, FontDefinitions, FontFamily, Frame, Hyperlink, Label, Layout, ScrollArea, Separator, TextStyle, Ui};
 use eframe::egui::Align::Min;
 use crate::TopBottomPanel;
+use serde::{Serialize, Deserialize};
 
 pub const PADDING: f32= 3.0;
 const WHITE: Color32= Color32::from_rgb(255, 255, 255);
+const BLACK: Color32= Color32::from_rgb(0, 0, 0);
 const CYAN: Color32= Color32::from_rgb(0, 255, 255);
+const RED: Color32= Color32::from_rgb(255, 0, 0);
+
+#[derive(Serialize, Deserialize)]
+pub struct HeadlinesConfig {
+    pub dark_mode: bool
+}
+impl Default for HeadlinesConfig {
+    fn default() -> Self {
+        Self {
+            dark_mode: Default::default()
+        }
+    }
+}
+impl HeadlinesConfig {
+    fn new() -> Self {
+        Self{
+            dark_mode: true
+        }
+    }
+}
 
 pub struct Headlines {
-    articles: Vec<NewsCardData>
+    articles: Vec<NewsCardData>,
+    pub config: HeadlinesConfig
 }
 
 struct NewsCardData {
@@ -28,8 +51,12 @@ impl Headlines {
             url: format!("https://example.com/{}", index)
         });
 
+        let config: HeadlinesConfig= confy::load("setup_headlines")
+            .unwrap_or_default();
+
         Headlines{
-            articles: iter.collect()
+            articles: iter.collect(),
+            config
         }
     }
 
@@ -75,7 +102,11 @@ impl Headlines {
                 ui.add_space(PADDING);
                 //Render title
                 let title= format!("► {}", news_card.title);
-                ui.colored_label(WHITE, title);
+                if self.config.dark_mode {
+                    ui.colored_label(WHITE, title);
+                }else{
+                    ui.colored_label(BLACK, title);
+                }
                 //Render desc
                 ui.add_space(PADDING);
                 let desc= Label::new(&news_card.desc)
@@ -83,7 +114,11 @@ impl Headlines {
                 ui.add(desc);
 
                 //Render hyperlynks
-                ui.style_mut().visuals.hyperlink_color= CYAN;
+                if self.config.dark_mode {
+                    ui.style_mut().visuals.hyperlink_color = CYAN;
+                } else {
+                    ui.style_mut().visuals.hyperlink_color = RED;
+                }
                 ui.add_space(PADDING);
 
                 let mut layout = Layout::right_to_left();
@@ -97,7 +132,7 @@ impl Headlines {
         });
     }
 
-    pub fn render_top_panel(&self, ctx: &CtxRef) {
+    pub fn render_top_panel(&mut self, ctx: &CtxRef, frame: &mut eframe::epi::Frame<'_>) {
         TopBottomPanel::top("top_panel").show(ctx, |ui| {
             ui.add_space(5.);
             egui::menu::bar(ui, |ui|{
@@ -115,12 +150,25 @@ impl Headlines {
                         let close_btn= ui.add(
                             Button::new("❌").text_style(TextStyle::Body)
                         );
+                        if close_btn.clicked() {
+                            frame.quit();
+                        }
+
                         let refresh_btn= ui.add(
                             Button::new("🔄").text_style(TextStyle::Body)
                         );
                         let theme_btn= ui.add(
-                            Button::new("🌜").text_style(TextStyle::Body)
+                            Button::new({
+                                if self.config.dark_mode {
+                                    "☀"
+                                }else{
+                                    "🌜"
+                                }
+                            }).text_style(TextStyle::Body)
                         );
+                        if theme_btn.clicked() {
+                            self.config.dark_mode= !self.config.dark_mode;
+                        }
                     }
                 );
 

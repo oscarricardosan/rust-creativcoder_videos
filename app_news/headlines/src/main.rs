@@ -1,6 +1,6 @@
 mod headlines;
 
-use eframe::egui::{CentralPanel, Color32, CtxRef, FontDefinitions, FontFamily, Hyperlink, Label, Layout, Rgba, ScrollArea, Separator, TextStyle, TopBottomPanel, Ui, Vec2};
+use eframe::egui::{CentralPanel, Color32, CtxRef, FontDefinitions, FontFamily, Hyperlink, Label, Layout, Rgba, ScrollArea, Separator, TextStyle, TopBottomPanel, Ui, Vec2, Visuals};
 use eframe::epi::{App, Frame, Storage};
 use eframe::{NativeOptions, run_native};
 use eframe::egui::TextStyle::Monospace;
@@ -14,7 +14,14 @@ impl App for Headlines {
     }
     
     fn update(&mut self, ctx: &CtxRef, frame: &mut Frame<'_>) {
-        self.render_top_panel(ctx);
+
+        if self.config.dark_mode {
+            ctx.set_visuals(Visuals::dark());
+        }else {
+            ctx.set_visuals(Visuals::light());
+        }
+
+        self.render_top_panel(ctx, frame);
         CentralPanel::default().show(ctx, |ui| {
             render_header(ui);
             self.render_news_cards(ui);

@@ -3,12 +3,13 @@ https://www.youtube.com/watch?v=NtUkr_z7l84
 #Tips
 
 Librerías usadas en el proyecto:
+* Serde: framework para serialización y deserialiación de estructuras de datos https://serde.rs/
+* Confy: permite almacenar datos en local https://github.com/rust-cli/confy
 * Eframe: permite crear aplicaciones con interfaz gráfica GUI https://crates.io/crates/eframe/0.10.0
   * Elementos disponibles con eframe https://docs.rs/egui/0.15.0/egui/struct.Ui.html
 * Ureq: para realizar peticiones http https://docs.rs/ureq/0.4.0/ureq
 * Colour: para imprimir texto de diferentes colores en laconsola https://docs.rs/colour/0.6.0/colour/
 * Api de prueba: https://newsapi.org/docs/endpoints/top-headlines
-* Serde: framework para serialización y deserialiación de estructuras de datos https://serde.rs/
 * thiserror: Creación de typos de error personalizados de forma rápida y corta https://crates.io/crates/thiserror
 * dotenv: Manejo de variables de entorno https://crates.io/crates/dotenv
 * termimad: Uso de markdown para imprimir en consola https://crates.io/crates/termimad
