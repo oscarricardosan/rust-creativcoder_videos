@@ -1,11 +1,15 @@
 use std::borrow::Cow;
 use eframe::egui;
-use eframe::egui::{Button, Color32, CtxRef, FontDefinitions, FontFamily, Frame, Hyperlink, Label, Layout, ScrollArea, Separator, TextStyle, Ui};
+use eframe::egui::{Button, Color32, CtxRef, FontDefinitions, FontFamily, Frame, Hyperlink, Label, Layout, ScrollArea, Separator, TextStyle, Ui, Window};
 use eframe::egui::Align::Min;
+use eframe::egui::Key::Enter;
 use crate::TopBottomPanel;
 use serde::{Serialize, Deserialize};
 
 pub const PADDING: f32= 3.0;
+
+const CONFY_FILE: &str= "headlines";
+
 const WHITE: Color32= Color32::from_rgb(255, 255, 255);
 const BLACK: Color32= Color32::from_rgb(0, 0, 0);
 const CYAN: Color32= Color32::from_rgb(0, 255, 255);
@@ -13,32 +17,28 @@ const RED: Color32= Color32::from_rgb(255, 0, 0);
 
 #[derive(Serialize, Deserialize)]
 pub struct HeadlinesConfig {
-    pub dark_mode: bool
+    pub dark_mode: bool,
+    pub api_key: String
 }
 impl Default for HeadlinesConfig {
     fn default() -> Self {
         Self {
-            dark_mode: Default::default()
-        }
-    }
-}
-impl HeadlinesConfig {
-    fn new() -> Self {
-        Self{
-            dark_mode: true
+            dark_mode: Default::default(),
+            api_key: String::new()
         }
     }
 }
 
 pub struct Headlines {
-    articles: Vec<NewsCardData>,
-    pub config: HeadlinesConfig
+    pub articles: Vec<NewsCardData>,
+    pub config: HeadlinesConfig,
+    pub api_key_initialized: bool
 }
 
-struct NewsCardData {
-    title: String,
-    desc: String,
-    url: String
+pub struct NewsCardData {
+    pub title: String,
+    pub desc: String,
+    pub url: String
 }
 
 impl Headlines {
@@ -51,12 +51,13 @@ impl Headlines {
             url: format!("https://example.com/{}", index)
         });
 
-        let config: HeadlinesConfig= confy::load("setup_headlines")
+        let config: HeadlinesConfig= confy::load(CONFY_FILE)
             .unwrap_or_default();
 
         Headlines{
-            articles: iter.collect(),
-            config
+            api_key_initialized: !config.api_key.is_empty(),
+            config,
+            articles: iter.collect()
         }
     }
 
@@ -177,4 +178,26 @@ impl Headlines {
         });
     }
 
+    pub fn render_config(&mut self, ctx: &CtxRef) {
+        Window::new("Configuración").show(ctx, |ui|{
+            ui.label("Entra tu API_KEY para newsapi.org");
+
+            //El valor del input se ve reflejado en self.config.api_key
+            let text_input = ui.text_edit_singleline(&mut self.config.api_key);
+            if text_input.lost_focus() && ui.input().key_pressed(Enter){
+                if let Err(e) = confy::store(CONFY_FILE, HeadlinesConfig{
+                    dark_mode: self.config.dark_mode,
+                    api_key: self.config.api_key.to_string()
+                }) {
+                    tracing::error!("Fallo al guardar el estado de la app {}", e);
+                };
+                tracing::error!("Api key guardado");
+                self.api_key_initialized= true;
+            }
+            tracing::error!("{}", &self.config.api_key);
+            ui.label("Si tu no te has registrado para obtener tu KEY, ve a");
+            ui.hyperlink("https://newsapi.org");
+
+        });
+    }
 }
