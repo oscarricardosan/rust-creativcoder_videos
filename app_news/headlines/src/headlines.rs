@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::sync::mpsc::Receiver;
 use eframe::egui;
 use eframe::egui::{Button, Color32, CtxRef, FontDefinitions, FontFamily, Frame, Hyperlink, Label, Layout, ScrollArea, Separator, TextStyle, Ui, Window};
 use eframe::egui::Align::Min;
@@ -32,7 +33,9 @@ impl Default for HeadlinesConfig {
 pub struct Headlines {
     pub articles: Vec<NewsCardData>,
     pub config: HeadlinesConfig,
-    pub api_key_initialized: bool
+    pub api_key_initialized: bool,
+    pub news_receiver: Option<Receiver<NewsCardData>>,
+    pub is_preload_articles: bool
 }
 
 pub struct NewsCardData {
@@ -45,19 +48,15 @@ impl Headlines {
 
     pub fn new() -> Headlines {
 
-        let iter= (0..20).map(|index| NewsCardData{
-            title: format!("Title {}", index),
-            desc: format!("Desc {}", index),
-            url: format!("https://example.com/{}", index)
-        });
-
         let config: HeadlinesConfig= confy::load(CONFY_FILE)
             .unwrap_or_default();
 
         Headlines{
             api_key_initialized: !config.api_key.is_empty(),
             config,
-            articles: iter.collect()
+            articles: vec![],
+            news_receiver: None,
+            is_preload_articles: false
         }
     }
 
@@ -176,6 +175,20 @@ impl Headlines {
             });
             ui.add_space(5.);
         });
+    }
+
+    pub fn preload_articles(&mut self) {
+        if let Some(receiver) = &self.news_receiver {
+            match  receiver.try_recv(){
+                Ok(news_data)=> {
+                    self.articles.push(news_data);
+                    self.is_preload_articles= true;
+                },
+                Err(e)=> {
+                    tracing::warn!("Error recibiendo mensaje {}", e);
+                }
+            }
+        }
     }
 
     pub fn render_config(&mut self, ctx: &CtxRef) {

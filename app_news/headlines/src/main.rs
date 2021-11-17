@@ -1,5 +1,7 @@
 mod headlines;
 
+use std::sync::mpsc::channel;
+use std::thread;
 use eframe::egui::{CentralPanel, Color32, CtxRef, FontDefinitions, FontFamily, Hyperlink, Label, Layout, Rgba, ScrollArea, Separator, TextStyle, TopBottomPanel, Ui, Vec2, Visuals};
 use eframe::epi::{App, Frame, Storage};
 use eframe::{NativeOptions, run_native};
@@ -8,31 +10,50 @@ use crate::headlines::{Headlines, NewsCardData};
 
 
 fn fetch_news(api_key: &str, articles: &mut Vec<NewsCardData> ) {
-    if let Ok(response) = newsapi::NewsAPI::new(api_key).fetch() {
-        let response_articles = response.articles();
-        for article in response_articles {
-            let news = NewsCardData {
-                title: article.title().to_string(),
-                url: article.url().to_string(),
-                desc: article.desc()
-                    .map(|val|{val.to_string()})
-                    .unwrap_or("...".to_string())
-            };
-            articles.push(news);
-        }
-    }
+
 }
 
 impl App for Headlines {
 
     //Lllamado de una sola vez para configurar la app
     fn setup(&mut self, ctx: &CtxRef, _frame: &mut Frame<'_>, _storage: Option<&dyn Storage>) {
-        fetch_news(&self.config.api_key, &mut self.articles);
+        let api_key= self.config.api_key.to_string();
+
+        let (news_sender, news_receiver)= channel();
+
+        self.news_receiver = Some(news_receiver);
+
+        thread::spawn(move ||{
+            if let Ok(response) = newsapi::NewsAPI::new(&api_key).fetch() {
+                let response_articles = response.articles();
+                for article in response_articles {
+                    let news = NewsCardData {
+                        title: article.title().to_string(),
+                        url: article.url().to_string(),
+                        desc: article.desc()
+                            .map(|val|{val.to_string()})
+                            .unwrap_or("...".to_string())
+                    };
+
+                    if let Err(e) = news_sender.send(news){
+                        tracing::error!("Error sending news data: {}", e);
+                    }
+                }
+            }
+        });
+
         self.configure_fonts(ctx);
+
     }
 
     //Este refresh se ejecutada 60 veces por segudo / 60fps
     fn update(&mut self, ctx: &CtxRef, frame: &mut Frame<'_>) {
+
+        //Por defecto egui no escucha procesos si no tiene el focus
+        //para evitar consumo de recursos, pero esto hace que
+        //no se renderice sin el mouse encima, con la línea de abajo
+        //se soluciona el proceso.
+        ctx.request_repaint();
 
         if self.config.dark_mode {
             ctx.set_visuals(Visuals::dark());
@@ -43,6 +64,8 @@ impl App for Headlines {
         if !self.api_key_initialized {
             self.render_config(ctx);
         }else {
+            self.preload_articles();
+
             CentralPanel::default().show(ctx, |ui| {
                 render_header(ui);
                 self.render_news_cards(ui);
