@@ -4,7 +4,7 @@ use std::sync::mpsc::channel;
 use std::thread;
 use eframe::egui::{CentralPanel, Color32, CtxRef, FontDefinitions, FontFamily, Hyperlink, Label, Layout, Rgba, ScrollArea, Separator, TextStyle, TopBottomPanel, Ui, Vec2, Visuals};
 use eframe::epi::{App, Frame, Storage};
-use eframe::{NativeOptions, run_native};
+use eframe::{egui, NativeOptions, run_native};
 use eframe::egui::TextStyle::Monospace;
 use crate::headlines::{Headlines, NewsCardData};
 
@@ -66,9 +66,10 @@ impl App for Headlines {
         }else {
             self.preload_articles();
 
-            CentralPanel::default().show(ctx, |ui| {
+            CentralPanel::default()
+                .show(ctx, |ui| {
                 render_header(ui);
-                self.render_news_cards(ui);
+                self.render_news_cards(ctx, ui);
                 render_footer(ui, ctx);
             });
         }
@@ -82,32 +83,35 @@ impl App for Headlines {
 }
 
 fn render_footer(ui: &mut Ui, ctx: &CtxRef) {
-    TopBottomPanel::bottom("id_source").show(ctx, |ui|{
-        ui.vertical_centered(|ui|{
-            ui.add_space(10.);
-            ui.add(Label::new("API fuente: newsapi.org").monospace());
-            ui.add(
-                Hyperlink::new("https://github.com/emilk/egui")
-                    .text("Hecho con egui")
-                    .text_style(Monospace)
-            );
-            ui.add(
-                Hyperlink::new("https://github.com/emilk/egui")
-                    .text("oscarricardosan/rust-creativcoder_videos")
-                    .text_style(Monospace)
-            );
-            ui.add_space(10.);
+    TopBottomPanel::bottom("bottom_panel")
+        .min_height(70.)
+        .max_height(70.)
+        .show(ctx, |ui|{
+            ui.vertical_centered(|ui|{
+                ui.add_space(10.);
+                ui.add(Label::new("API fuente: newsapi.org").monospace());
+                ui.add(
+                    Hyperlink::new("https://github.com/emilk/egui")
+                        .text("Hecho con egui")
+                        .text_style(Monospace)
+                );
+                ui.add(
+                    Hyperlink::new("https://github.com/emilk/egui")
+                        .text("oscarricardosan/rust-creativcoder_videos")
+                        .text_style(Monospace)
+                );
+                ui.add_space(10.);
+            });
         });
-    });
 }
 
 fn render_header(ui: &mut Ui) {
     ui.vertical_centered(|ui| {
         ui.heading("Headlines");
     });
-    ui.add_space(headlines::PADDING);
-    let sep= Separator::default().spacing(10 as f32);
-    ui.add(sep);
+    ui.add_space(headlines::PADDING*5.1);
+    // let sep= Separator::default().spacing(10 as f32);
+    // ui.add(sep);
 }
 
 fn main() {
@@ -115,7 +119,8 @@ fn main() {
 
     let app= Headlines::new();
     let mut win_option= NativeOptions::default();
-    win_option.initial_window_size = Some(Vec2::new(540 as f32, 960 as f32));
+    win_option.initial_window_size = Some(Vec2::new(540 as f32, 700 as f32));
+    win_option.resizable = false;
     run_native(Box::new(app), win_option);
 
 }

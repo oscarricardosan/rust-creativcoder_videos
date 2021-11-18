@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::sync::mpsc::Receiver;
 use eframe::egui;
-use eframe::egui::{Button, Color32, CtxRef, FontDefinitions, FontFamily, Frame, Hyperlink, Label, Layout, ScrollArea, Separator, TextStyle, Ui, Window};
+use eframe::egui::{Button, CentralPanel, Color32, CtxRef, FontDefinitions, FontFamily, Frame, Hyperlink, Label, Layout, ScrollArea, Separator, TextStyle, Ui, Window};
 use eframe::egui::Align::Min;
 use eframe::egui::Key::Enter;
 use crate::TopBottomPanel;
@@ -94,85 +94,93 @@ impl Headlines {
         ctx.set_fonts(font_def);
 
     }
-    pub fn render_news_cards(&self, ui: &mut Ui) {
-
+    pub fn render_news_cards(&self, ctx:&CtxRef, ui: &mut Ui) {
         //https://docs.rs/egui/0.15.0/egui/containers/struct.ScrollArea.html
-        ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
-            for news_card in &self.articles {
-                ui.add_space(PADDING);
-                //Render title
-                let title= format!("► {}", news_card.title);
-                if self.config.dark_mode {
-                    ui.colored_label(WHITE, title);
-                }else{
-                    ui.colored_label(BLACK, title);
-                }
-                //Render desc
-                ui.add_space(PADDING);
-                let desc= Label::new(&news_card.desc)
-                    .text_style(TextStyle::Button);
-                ui.add(desc);
+        ScrollArea::both()
+            .auto_shrink([false; 2])
+            .max_height(570.)
+            .show(ui, |ui| {
+                let total_elements= self.articles.len();
+                let mut count_executions= 0;
+                for news_card in &self.articles {
+                    ui.add_space(PADDING);
+                    //Render title
+                    let title= format!("► {}", news_card.title);
+                    if self.config.dark_mode {
+                        ui.colored_label(WHITE, title);
+                    }else{
+                        ui.colored_label(BLACK, title);
+                    }
+                    //Render desc
+                    ui.add_space(PADDING);
+                    let desc= Label::new(&news_card.desc)
+                        .text_style(TextStyle::Button);
+                    ui.add(desc);
 
-                //Render hyperlynks
-                if self.config.dark_mode {
-                    ui.style_mut().visuals.hyperlink_color = CYAN;
-                } else {
-                    ui.style_mut().visuals.hyperlink_color = RED;
-                }
-                ui.add_space(PADDING);
+                    //Render hyperlynks
+                    if self.config.dark_mode {
+                        ui.style_mut().visuals.hyperlink_color = CYAN;
+                    } else {
+                        ui.style_mut().visuals.hyperlink_color = RED;
+                    }
+                    ui.add_space(PADDING);
 
-                let mut layout = Layout::right_to_left();
-                layout = layout.with_cross_align(Min);
-                ui.with_layout(layout, |ui| {
-                    ui.add(Hyperlink::new(&news_card.url).text("Leer mas ⤴"));
-                });
-                ui.add_space(PADDING);
-                ui.add(Separator::default());
-            }
-        });
+                    let mut layout = Layout::right_to_left();
+                    layout = layout.with_cross_align(Min);
+                    ui.with_layout(layout, |ui| {
+                        ui.add(Hyperlink::new(&news_card.url).text("Leer mas ⤴"));
+                    });
+                    ui.add_space(PADDING);
+                    count_executions+=1;
+                    if count_executions < total_elements{
+                        ui.add(Separator::default());
+                    }
+                }
+            });
     }
 
     pub fn render_top_panel(&mut self, ctx: &CtxRef, frame: &mut eframe::epi::Frame<'_>) {
-        TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            ui.add_space(5.);
-            egui::menu::bar(ui, |ui|{
-                //Logo
-                ui.with_layout(
-                    Layout::left_to_right(), |ui|{
-                        ui.add(
-                            Label::new("📕").text_style(egui::TextStyle::Heading)
-                        );
-                    }
-                );
-                //Controls
-                ui.with_layout(
-                    Layout::right_to_left(), |ui|{
-                        let close_btn= ui.add(
-                            Button::new("❌").text_style(TextStyle::Body)
-                        );
-                        if close_btn.clicked() {
-                            frame.quit();
+        TopBottomPanel::top("top_panel")
+            .show(ctx, |ui| {
+                ui.add_space(5.);
+                egui::menu::bar(ui, |ui|{
+                    //Logo
+                    ui.with_layout(
+                        Layout::left_to_right(), |ui|{
+                            ui.add(
+                                Label::new("📕").text_style(egui::TextStyle::Heading)
+                            );
                         }
+                    );
+                    //Controls
+                    ui.with_layout(
+                        Layout::right_to_left(), |ui|{
+                            let close_btn= ui.add(
+                                Button::new("❌").text_style(TextStyle::Body)
+                            );
+                            if close_btn.clicked() {
+                                frame.quit();
+                            }
 
-                        let refresh_btn= ui.add(
-                            Button::new("🔄").text_style(TextStyle::Body)
-                        );
-                        let theme_btn= ui.add(
-                            Button::new({
-                                if self.config.dark_mode {
-                                    "☀"
-                                }else{
-                                    "🌜"
-                                }
-                            }).text_style(TextStyle::Body)
-                        );
-                        if theme_btn.clicked() {
-                            self.config.dark_mode= !self.config.dark_mode;
+                            let refresh_btn= ui.add(
+                                Button::new("🔄").text_style(TextStyle::Body)
+                            );
+                            let theme_btn= ui.add(
+                                Button::new({
+                                    if self.config.dark_mode {
+                                        "☀"
+                                    }else{
+                                        "🌜"
+                                    }
+                                }).text_style(TextStyle::Body)
+                            );
+                            if theme_btn.clicked() {
+                                self.config.dark_mode= !self.config.dark_mode;
+                            }
                         }
-                    }
-                );
+                    );
 
-            });
+                });
             ui.add_space(5.);
         });
     }
