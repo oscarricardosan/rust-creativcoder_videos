@@ -1,17 +1,13 @@
 mod headlines;
 
-use std::sync::mpsc::channel;
+use std::sync::mpsc::{channel, sync_channel};
 use std::thread;
 use eframe::egui::{CentralPanel, Color32, CtxRef, FontDefinitions, FontFamily, Hyperlink, Label, Layout, Rgba, ScrollArea, Separator, TextStyle, TopBottomPanel, Ui, Vec2, Visuals};
 use eframe::epi::{App, Frame, Storage};
 use eframe::{NativeOptions, run_native};
 use eframe::egui::TextStyle::Monospace;
-use crate::headlines::{Headlines, NewsCardData};
+use crate::headlines::{Headlines, Msg, NewsCardData};
 
-
-fn fetch_news(api_key: &str, articles: &mut Vec<NewsCardData> ) {
-
-}
 
 impl App for Headlines {
 
@@ -19,27 +15,28 @@ impl App for Headlines {
     fn setup(&mut self, ctx: &CtxRef, _frame: &mut Frame<'_>, _storage: Option<&dyn Storage>) {
         let api_key= self.config.api_key.to_string();
 
-        let (news_sender, news_receiver)= channel();
+        let (mut news_sender, news_receiver)= channel();
+        let (app_sender, app_receiver)= sync_channel(1);
 
+        self.app_sender = Some(app_sender);
         self.news_receiver = Some(news_receiver);
 
         thread::spawn(move ||{
-            if let Ok(response) = newsapi::NewsAPI::new(&api_key).fetch() {
-                let response_articles = response.articles();
-                for article in response_articles {
-                    let news = NewsCardData {
-                        title: article.title().to_string(),
-                        url: article.url().to_string(),
-                        desc: article.desc()
-                            .map(|val|{val.to_string()})
-                            .unwrap_or("...".to_string())
-                    };
-
-                    if let Err(e) = news_sender.send(news){
-                        tracing::error!("Error sending news data: {}", e);
+            if !api_key.is_empty() {
+                fetch_news(&api_key, &mut news_sender);
+            }else {
+                loop {
+                    match app_receiver.recv() {
+                        Ok(Msg::ApiKeySet(api_key))=>  {
+                            fetch_news(&api_key,  &mut news_sender)
+                        }
+                        Err(e)=> {
+                            tracing::error!("Error recibiendo mensaje {}", e);
+                        }
                     }
                 }
             }
+
         });
 
         self.configure_fonts(ctx);
@@ -79,6 +76,25 @@ impl App for Headlines {
         "Headlines"
     }
 
+}
+
+fn fetch_news(api_key: &str, news_sender:&mut std::sync::mpsc::Sender<NewsCardData>) {
+    if let Ok(response) = newsapi::NewsAPI::new(&api_key).fetch() {
+        let response_articles = response.articles();
+        for article in response_articles {
+            let news = NewsCardData {
+                title: article.title().to_string(),
+                url: article.url().to_string(),
+                desc: article.desc()
+                    .map(|val|{val.to_string()})
+                    .unwrap_or("...".to_string())
+            };
+
+            if let Err(e) = news_sender.send(news){
+                tracing::error!("Error sending news data: {}", e);
+            }
+        }
+    }
 }
 
 fn render_footer(ui: &mut Ui, ctx: &CtxRef) {

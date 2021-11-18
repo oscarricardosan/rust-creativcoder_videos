@@ -1,11 +1,12 @@
 use std::borrow::Cow;
-use std::sync::mpsc::Receiver;
+use std::sync::mpsc::{Receiver, SyncSender};
 use eframe::egui;
 use eframe::egui::{Button, Color32, CtxRef, FontDefinitions, FontFamily, Frame, Hyperlink, Label, Layout, ScrollArea, Separator, TextStyle, Ui, Window};
 use eframe::egui::Align::Min;
 use eframe::egui::Key::Enter;
 use crate::TopBottomPanel;
 use serde::{Serialize, Deserialize};
+use crate::headlines::Msg::ApiKeySet;
 
 pub const PADDING: f32= 3.0;
 
@@ -15,6 +16,10 @@ const WHITE: Color32= Color32::from_rgb(255, 255, 255);
 const BLACK: Color32= Color32::from_rgb(0, 0, 0);
 const CYAN: Color32= Color32::from_rgb(0, 255, 255);
 const RED: Color32= Color32::from_rgb(255, 0, 0);
+
+pub enum Msg {
+    ApiKeySet(String)
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct HeadlinesConfig {
@@ -35,7 +40,7 @@ pub struct Headlines {
     pub config: HeadlinesConfig,
     pub api_key_initialized: bool,
     pub news_receiver: Option<Receiver<NewsCardData>>,
-    pub is_preload_articles: bool
+    pub app_sender: Option<SyncSender<Msg>>,
 }
 
 pub struct NewsCardData {
@@ -56,7 +61,7 @@ impl Headlines {
             config,
             articles: vec![],
             news_receiver: None,
-            is_preload_articles: false
+            app_sender: None
         }
     }
 
@@ -182,7 +187,6 @@ impl Headlines {
             match  receiver.try_recv(){
                 Ok(news_data)=> {
                     self.articles.push(news_data);
-                    self.is_preload_articles= true;
                 },
                 Err(e)=> {
                     tracing::warn!("Error recibiendo mensaje {}", e);
@@ -206,6 +210,9 @@ impl Headlines {
                 };
                 tracing::error!("Api key guardado");
                 self.api_key_initialized= true;
+                if let Some(app_send) = &self.app_sender {
+                    app_send.send(ApiKeySet(self.config.api_key.to_string()));
+                }
             }
             tracing::error!("{}", &self.config.api_key);
             ui.label("Si tu no te has registrado para obtener tu KEY, ve a");
