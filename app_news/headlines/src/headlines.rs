@@ -44,7 +44,6 @@ pub struct Headlines {
     pub api_key_initialized: bool,
     pub news_receiver: Option<Receiver<NewsCardData>>,
     pub news_sender: Option<Arc<Mutex<Sender<NewsCardData>>>>,
-    pub app_sender: Option<SyncSender<Msg>>,
 
     pub fetch_receiver: Option<Receiver<Msg>>,
     pub fetch_sender: Option<Arc<Mutex<SyncSender<Msg>>>>,
@@ -68,7 +67,6 @@ impl Headlines {
             config,
             articles: vec![],
             news_receiver: None,
-            app_sender: None,
             news_sender: None,
             fetch_receiver: None,
             fetch_sender: None
@@ -271,8 +269,8 @@ impl Headlines {
                 };
                 tracing::error!("Api key guardado");
                 self.api_key_initialized= true;
-                if let Some(app_sender) = &self.app_sender {
-                    app_sender.send(ApiKeySet(self.config.api_key.to_string()));
+                if let Some(fetch_sender) = &self.fetch_sender {
+                    fetch_sender.lock().unwrap().send(Msg::ExecuteFetch);
                 }
             }
             tracing::error!("{}", &self.config.api_key);

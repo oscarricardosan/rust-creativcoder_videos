@@ -14,13 +14,10 @@ impl App for Headlines {
 
     //Lllamado de una sola vez para configurar la app
     fn setup(&mut self, ctx: &CtxRef, _frame: &mut Frame<'_>, _storage: Option<&dyn Storage>) {
-        let api_key= self.config.api_key.to_string();
 
         let (mut news_sender, news_receiver)= channel();
-        let (app_sender, app_receiver)= sync_channel(1);
         let (fetch_sender, fetch_receiver)= sync_channel(1);
 
-        self.app_sender = Some(app_sender);
         self.news_receiver = Some(news_receiver);
         self.news_sender = Some(Arc::new(Mutex::new(news_sender)));
 
@@ -28,24 +25,9 @@ impl App for Headlines {
         let fetch_sender = Arc::new(Mutex::new(fetch_sender));
         self.fetch_sender = Some(fetch_sender.clone());
 
-        thread::spawn(move ||{
-            if !api_key.is_empty() {
-                fetch_sender.lock().unwrap().send(Msg::ExecuteFetch);
-            }else {
-                loop {
-                    match app_receiver.recv() {
-                        Ok(Msg::ApiKeySet(api_key))=>  {
-                            fetch_sender.lock().unwrap().send(Msg::ExecuteFetch);
-                        }
-                        Err(e)=> {
-                            tracing::error!("Error recibiendo mensaje {}", e);
-                        }
-                        _=> {}
-                    }
-                }
-            }
-
-        });
+        if self.api_key_initialized {
+            fetch_sender.lock().unwrap().send(Msg::ExecuteFetch);
+        }
 
         self.configure_fonts(ctx);
 
@@ -88,7 +70,7 @@ impl App for Headlines {
 
 }
 
-fn render_footer(ui: &mut Ui, ctx: &CtxRef) {
+fn render_footer(_ui: &mut Ui, ctx: &CtxRef) {
     TopBottomPanel::bottom("bottom_panel")
         .min_height(70.)
         .max_height(70.)
