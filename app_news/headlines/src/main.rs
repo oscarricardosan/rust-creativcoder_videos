@@ -23,12 +23,12 @@ impl App for Headlines {
 
         thread::spawn(move ||{
             if !api_key.is_empty() {
-                fetch_news(&api_key, &mut news_sender);
+                Headlines::fetch_news();
             }else {
                 loop {
                     match app_receiver.recv() {
                         Ok(Msg::ApiKeySet(api_key))=>  {
-                            fetch_news(&api_key,  &mut news_sender)
+                            Headlines::fetch_news();
                         }
                         Err(e)=> {
                             tracing::error!("Error recibiendo mensaje {}", e);
@@ -77,25 +77,6 @@ impl App for Headlines {
         "Headlines"
     }
 
-}
-
-fn fetch_news(api_key: &str, news_sender:&mut std::sync::mpsc::Sender<NewsCardData>) {
-    if let Ok(response) = newsapi::NewsAPI::new(&api_key).fetch() {
-        let response_articles = response.articles();
-        for article in response_articles {
-            let news = NewsCardData {
-                title: article.title().to_string(),
-                url: article.url().to_string(),
-                desc: article.desc()
-                    .map(|val|{val.to_string()})
-                    .unwrap_or("...".to_string())
-            };
-
-            if let Err(e) = news_sender.send(news){
-                tracing::error!("Error sending news data: {}", e);
-            }
-        }
-    }
 }
 
 fn render_footer(ui: &mut Ui, ctx: &CtxRef) {

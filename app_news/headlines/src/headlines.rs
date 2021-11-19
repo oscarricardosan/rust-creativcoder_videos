@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use std::sync::mpsc::{Receiver, SyncSender};
+use std::sync::mpsc::{Receiver, Sender, SyncSender};
 use eframe::egui;
 use eframe::egui::{Button, CentralPanel, Color32, CtxRef, FontDefinitions, FontFamily, Frame, Hyperlink, Label, Layout, ScrollArea, Separator, TextStyle, Ui, Window};
 use eframe::egui::Align::Min;
@@ -40,6 +40,7 @@ pub struct Headlines {
     pub config: HeadlinesConfig,
     pub api_key_initialized: bool,
     pub news_receiver: Option<Receiver<NewsCardData>>,
+    pub news_sender: Option<Sender<NewsCardData>>,
     pub app_sender: Option<SyncSender<Msg>>,
 }
 
@@ -61,7 +62,8 @@ impl Headlines {
             config,
             articles: vec![],
             news_receiver: None,
-            app_sender: None
+            app_sender: None,
+            news_sender: None
         }
     }
 
@@ -98,6 +100,27 @@ impl Headlines {
 
         ctx.set_fonts(font_def);
 
+    }
+
+    pub fn fetch_news(&self) {
+        let api_key= self.config.api_key;
+        let news_sender= self.news_sender;
+        if let Ok(response) = newsapi::NewsAPI::new(&api_key).fetch() {
+            let response_articles = response.articles();
+            for article in response_articles {
+                let news = NewsCardData {
+                    title: article.title().to_string(),
+                    url: article.url().to_string(),
+                    desc: article.desc()
+                        .map(|val|{val.to_string()})
+                        .unwrap_or("...".to_string())
+                };
+
+                if let Err(e) = news_sender.send(news){
+                    tracing::error!("Error sending news data: {}", e);
+                }
+            }
+        }
     }
     pub fn render_news_cards(&self, ctx:&CtxRef, ui: &mut Ui) {
         //https://docs.rs/egui/0.15.0/egui/containers/struct.ScrollArea.html
