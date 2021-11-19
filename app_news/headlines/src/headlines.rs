@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{Receiver, Sender, SyncSender};
 use eframe::egui;
 use eframe::egui::{Button, CentralPanel, Color32, CtxRef, FontDefinitions, FontFamily, Frame, Hyperlink, Label, Layout, ScrollArea, Separator, TextStyle, Ui, Window};
@@ -40,8 +41,8 @@ pub struct Headlines {
     pub config: HeadlinesConfig,
     pub api_key_initialized: bool,
     pub news_receiver: Option<Receiver<NewsCardData>>,
-    pub news_sender: Option<Sender<NewsCardData>>,
     pub app_sender: Option<SyncSender<Msg>>,
+    pub news_sender: Option<Arc<Mutex<Sender<NewsCardData>>>>,
 }
 
 pub struct NewsCardData {
@@ -102,11 +103,10 @@ impl Headlines {
 
     }
 
-    pub fn fetch_news(&self) {
-        let api_key= self.config.api_key;
-        let news_sender= self.news_sender;
-        if let Ok(response) = newsapi::NewsAPI::new(&api_key).fetch() {
+    pub fn fetch_news(&mut self) {
+        if let Ok(response) = newsapi::NewsAPI::new(&self.config.api_key).fetch() {
             let response_articles = response.articles();
+            self.clear_news_cards();
             for article in response_articles {
                 let news = NewsCardData {
                     title: article.title().to_string(),
@@ -116,12 +116,17 @@ impl Headlines {
                         .unwrap_or("...".to_string())
                 };
 
-                if let Err(e) = news_sender.send(news){
-                    tracing::error!("Error sending news data: {}", e);
+                if let Some(news_sender) = &self.news_sender {
+                    news_sender.lock().unwrap().send(news);
                 }
             }
         }
     }
+
+    fn clear_news_cards(&mut self) {
+        self.articles= vec![];
+    }
+
     pub fn render_news_cards(&self, ctx:&CtxRef, ui: &mut Ui) {
         //https://docs.rs/egui/0.15.0/egui/containers/struct.ScrollArea.html
         ScrollArea::both()
@@ -193,6 +198,10 @@ impl Headlines {
                             let refresh_btn= ui.add(
                                 Button::new("🔄").text_style(TextStyle::Body)
                             );
+                            if refresh_btn.clicked() {
+                                self.fetch_news();
+                            }
+
                             let theme_btn= ui.add(
                                 Button::new({
                                     if self.config.dark_mode {

@@ -1,5 +1,6 @@
 mod headlines;
 
+use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{channel, sync_channel};
 use std::thread;
 use eframe::egui::{CentralPanel, Color32, CtxRef, FontDefinitions, FontFamily, Hyperlink, Label, Layout, Rgba, ScrollArea, Separator, TextStyle, TopBottomPanel, Ui, Vec2, Visuals};
@@ -20,24 +21,25 @@ impl App for Headlines {
 
         self.app_sender = Some(app_sender);
         self.news_receiver = Some(news_receiver);
+        self.news_sender = Some(Arc::new(Mutex::new((news_sender))));
 
-        thread::spawn(move ||{
-            if !api_key.is_empty() {
-                Headlines::fetch_news();
-            }else {
-                loop {
-                    match app_receiver.recv() {
-                        Ok(Msg::ApiKeySet(api_key))=>  {
-                            Headlines::fetch_news();
-                        }
-                        Err(e)=> {
-                            tracing::error!("Error recibiendo mensaje {}", e);
-                        }
-                    }
-                }
-            }
-
-        });
+        // thread::spawn(move ||{
+        //     if !api_key.is_empty() {
+        //         self.fetch_news();
+        //     }else {
+        //         loop {
+        //             match app_receiver.recv() {
+        //                 Ok(Msg::ApiKeySet(api_key))=>  {
+        //                     self.fetch_news();
+        //                 }
+        //                 Err(e)=> {
+        //                     tracing::error!("Error recibiendo mensaje {}", e);
+        //                 }
+        //             }
+        //         }
+        //     }
+        //
+        // });
 
         self.configure_fonts(ctx);
 
