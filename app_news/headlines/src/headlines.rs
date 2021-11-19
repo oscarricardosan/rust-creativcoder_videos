@@ -2,13 +2,11 @@ use std::borrow::Cow;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{Receiver, Sender, SyncSender};
 use eframe::egui;
-use eframe::egui::{Button, CentralPanel, Color32, CtxRef, FontDefinitions, FontFamily, Frame, Hyperlink, Label, Layout, ScrollArea, Separator, TextStyle, Ui, Window};
+use eframe::egui::{Button, Color32, CtxRef, FontDefinitions, FontFamily, Hyperlink, Label, Layout, ScrollArea, Separator, TextStyle, Ui, Window};
 use eframe::egui::Align::Min;
 use eframe::egui::Key::Enter;
 use crate::TopBottomPanel;
 use serde::{Serialize, Deserialize};
-use tracing::debug;
-use crate::headlines::Msg::ApiKeySet;
 
 pub const PADDING: f32= 3.0;
 
@@ -20,7 +18,6 @@ const CYAN: Color32= Color32::from_rgb(0, 255, 255);
 const RED: Color32= Color32::from_rgb(255, 0, 0);
 
 pub enum Msg {
-    ApiKeySet(String),
     ExecuteFetch,
 }
 
@@ -133,9 +130,6 @@ impl Headlines {
                 Err(e)=> {
                     tracing::warn!("Error recibiendo orden para listar mensajes {}", e);
                 }
-                _=> {
-                    tracing::warn!("Opción por defecto");
-                }
             }
         }
     }
@@ -144,7 +138,7 @@ impl Headlines {
         self.articles= vec![];
     }
 
-    pub fn render_news_cards(&self, ctx:&CtxRef, ui: &mut Ui) {
+    pub fn render_news_cards(&self, _ctx:&CtxRef, ui: &mut Ui) {
         //https://docs.rs/egui/0.15.0/egui/containers/struct.ScrollArea.html
         ScrollArea::both()
             .auto_shrink([false; 2])
@@ -216,8 +210,11 @@ impl Headlines {
                                 Button::new("🔄").text_style(TextStyle::Body)
                             );
                             if refresh_btn.clicked() {
-                                if let fetch_sender= Some(&self.fetch_sender){
-                                    fetch_sender.unwrap().as_ref().unwrap().lock().unwrap().send(Msg::ExecuteFetch);
+                                match &self.fetch_sender {
+                                    Some(fetch_sender)=> {
+                                        fetch_sender.lock().unwrap().send(Msg::ExecuteFetch);
+                                    }
+                                    None=> {}
                                 }
                             }
 
@@ -241,7 +238,7 @@ impl Headlines {
         });
     }
 
-    pub fn preload_articles(&mut self) {
+    pub fn load_articles(&mut self) {
         if let Some(news_receiver) = &self.news_receiver {
             match news_receiver.try_recv(){
                 Ok(news_data)=> {

@@ -2,12 +2,11 @@ mod headlines;
 
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{channel, sync_channel};
-use std::thread;
-use eframe::egui::{CentralPanel, Color32, CtxRef, FontDefinitions, FontFamily, Hyperlink, Label, Layout, Rgba, ScrollArea, Separator, TextStyle, TopBottomPanel, Ui, Vec2, Visuals};
+use eframe::egui::{CentralPanel, CtxRef, Hyperlink, Label, TopBottomPanel, Ui, Vec2, Visuals};
 use eframe::epi::{App, Frame, Storage};
-use eframe::{egui, NativeOptions, run_native};
+use eframe::{NativeOptions, run_native};
 use eframe::egui::TextStyle::Monospace;
-use crate::headlines::{Headlines, Msg, NewsCardData};
+use crate::headlines::{Headlines, Msg};
 
 
 impl App for Headlines {
@@ -15,7 +14,7 @@ impl App for Headlines {
     //Lllamado de una sola vez para configurar la app
     fn setup(&mut self, ctx: &CtxRef, _frame: &mut Frame<'_>, _storage: Option<&dyn Storage>) {
 
-        let (mut news_sender, news_receiver)= channel();
+        let (news_sender, news_receiver)= channel();
         let (fetch_sender, fetch_receiver)= sync_channel(1);
 
         self.news_receiver = Some(news_receiver);
@@ -33,7 +32,7 @@ impl App for Headlines {
 
     }
 
-    //Este refresh se ejecutada 60 veces por segudo / 60fps
+    //Este refresh se ejecuta 60 veces por segudo / 60fps
     fn update(&mut self, ctx: &CtxRef, frame: &mut Frame<'_>) {
 
         //Por defecto egui no escucha procesos si no tiene el focus
@@ -51,7 +50,7 @@ impl App for Headlines {
         if !self.api_key_initialized {
             self.render_config(ctx);
         }else {
-            self.preload_articles();
+            self.load_articles();
 
             CentralPanel::default()
                 .show(ctx, |ui| {
