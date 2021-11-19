@@ -18,28 +18,34 @@ impl App for Headlines {
 
         let (mut news_sender, news_receiver)= channel();
         let (app_sender, app_receiver)= sync_channel(1);
+        let (fetch_sender, fetch_receiver)= sync_channel(1);
 
         self.app_sender = Some(app_sender);
         self.news_receiver = Some(news_receiver);
-        self.news_sender = Some(Arc::new(Mutex::new((news_sender))));
+        self.news_sender = Some(Arc::new(Mutex::new(news_sender)));
 
-        // thread::spawn(move ||{
-        //     if !api_key.is_empty() {
-        //         self.fetch_news();
-        //     }else {
-        //         loop {
-        //             match app_receiver.recv() {
-        //                 Ok(Msg::ApiKeySet(api_key))=>  {
-        //                     self.fetch_news();
-        //                 }
-        //                 Err(e)=> {
-        //                     tracing::error!("Error recibiendo mensaje {}", e);
-        //                 }
-        //             }
-        //         }
-        //     }
-        //
-        // });
+        self.fetch_receiver = Some(fetch_receiver);
+        let fetch_sender = Arc::new(Mutex::new(fetch_sender));
+        self.fetch_sender = Some(fetch_sender.clone());
+
+        thread::spawn(move ||{
+            if !api_key.is_empty() {
+                fetch_sender.lock().unwrap().send(Msg::ExecuteFetch);
+            }else {
+                loop {
+                    match app_receiver.recv() {
+                        Ok(Msg::ApiKeySet(api_key))=>  {
+                            fetch_sender.lock().unwrap().send(Msg::ExecuteFetch);
+                        }
+                        Err(e)=> {
+                            tracing::error!("Error recibiendo mensaje {}", e);
+                        }
+                        _=> {}
+                    }
+                }
+            }
+
+        });
 
         self.configure_fonts(ctx);
 
@@ -73,6 +79,7 @@ impl App for Headlines {
             });
         }
         self.render_top_panel(ctx, frame);
+        self.fetch_news();
     }
 
     fn name(&self) -> &str {

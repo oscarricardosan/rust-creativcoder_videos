@@ -7,6 +7,7 @@ use eframe::egui::Align::Min;
 use eframe::egui::Key::Enter;
 use crate::TopBottomPanel;
 use serde::{Serialize, Deserialize};
+use tracing::debug;
 use crate::headlines::Msg::ApiKeySet;
 
 pub const PADDING: f32= 3.0;
@@ -19,7 +20,8 @@ const CYAN: Color32= Color32::from_rgb(0, 255, 255);
 const RED: Color32= Color32::from_rgb(255, 0, 0);
 
 pub enum Msg {
-    ApiKeySet(String)
+    ApiKeySet(String),
+    ExecuteFetch,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -41,8 +43,11 @@ pub struct Headlines {
     pub config: HeadlinesConfig,
     pub api_key_initialized: bool,
     pub news_receiver: Option<Receiver<NewsCardData>>,
-    pub app_sender: Option<SyncSender<Msg>>,
     pub news_sender: Option<Arc<Mutex<Sender<NewsCardData>>>>,
+    pub app_sender: Option<SyncSender<Msg>>,
+
+    pub fetch_receiver: Option<Receiver<Msg>>,
+    pub fetch_sender: Option<Arc<Mutex<SyncSender<Msg>>>>,
 }
 
 pub struct NewsCardData {
@@ -64,7 +69,9 @@ impl Headlines {
             articles: vec![],
             news_receiver: None,
             app_sender: None,
-            news_sender: None
+            news_sender: None,
+            fetch_receiver: None,
+            fetch_sender: None
         }
     }
 
@@ -104,20 +111,32 @@ impl Headlines {
     }
 
     pub fn fetch_news(&mut self) {
-        if let Ok(response) = newsapi::NewsAPI::new(&self.config.api_key).fetch() {
-            let response_articles = response.articles();
-            self.clear_news_cards();
-            for article in response_articles {
-                let news = NewsCardData {
-                    title: article.title().to_string(),
-                    url: article.url().to_string(),
-                    desc: article.desc()
-                        .map(|val|{val.to_string()})
-                        .unwrap_or("...".to_string())
-                };
+        if let Some(fetch_receiver) = &self.fetch_receiver {
+            match fetch_receiver.try_recv(){
+                Ok(Msg::ExecuteFetch)=> {
+                    if let Ok(response) = newsapi::NewsAPI::new(&self.config.api_key).fetch() {
+                        let response_articles = response.articles();
+                        self.clear_news_cards();
+                        for article in response_articles {
+                            let news = NewsCardData {
+                                title: article.title().to_string(),
+                                url: article.url().to_string(),
+                                desc: article.desc()
+                                    .map(|val|{val.to_string()})
+                                    .unwrap_or("...".to_string())
+                            };
 
-                if let Some(news_sender) = &self.news_sender {
-                    news_sender.lock().unwrap().send(news);
+                            if let Some(news_sender) = &self.news_sender {
+                                news_sender.lock().unwrap().send(news);
+                            }
+                        }
+                    }
+                }
+                Err(e)=> {
+                    tracing::warn!("Error recibiendo orden para listar mensajes {}", e);
+                }
+                _=> {
+                    tracing::warn!("Opción por defecto");
                 }
             }
         }
@@ -199,7 +218,9 @@ impl Headlines {
                                 Button::new("🔄").text_style(TextStyle::Body)
                             );
                             if refresh_btn.clicked() {
-                                self.fetch_news();
+                                if let fetch_sender= Some(&self.fetch_sender){
+                                    fetch_sender.unwrap().as_ref().unwrap().lock().unwrap().send(Msg::ExecuteFetch);
+                                }
                             }
 
                             let theme_btn= ui.add(
@@ -223,8 +244,8 @@ impl Headlines {
     }
 
     pub fn preload_articles(&mut self) {
-        if let Some(receiver) = &self.news_receiver {
-            match  receiver.try_recv(){
+        if let Some(news_receiver) = &self.news_receiver {
+            match news_receiver.try_recv(){
                 Ok(news_data)=> {
                     self.articles.push(news_data);
                 },
@@ -250,8 +271,8 @@ impl Headlines {
                 };
                 tracing::error!("Api key guardado");
                 self.api_key_initialized= true;
-                if let Some(app_send) = &self.app_sender {
-                    app_send.send(ApiKeySet(self.config.api_key.to_string()));
+                if let Some(app_sender) = &self.app_sender {
+                    app_sender.send(ApiKeySet(self.config.api_key.to_string()));
                 }
             }
             tracing::error!("{}", &self.config.api_key);
