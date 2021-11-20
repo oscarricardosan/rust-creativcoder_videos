@@ -2,10 +2,9 @@ mod headlines;
 
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{channel, sync_channel};
-use eframe::egui::{CentralPanel, CtxRef, Hyperlink, Label, TopBottomPanel, Ui, Vec2, Visuals};
+use eframe::egui::{CentralPanel, CtxRef, TopBottomPanel, Vec2, Visuals};
 use eframe::epi::{App, Frame, Storage};
 use eframe::{NativeOptions, run_native};
-use eframe::egui::TextStyle::Monospace;
 use crate::headlines::{Headlines, Msg};
 
 
@@ -25,7 +24,11 @@ impl App for Headlines {
         self.fetch_sender = Some(fetch_sender.clone());
 
         if self.api_key_initialized {
-            fetch_sender.lock().unwrap().send(Msg::ExecuteFetch);
+            fetch_sender
+                .lock()
+                .unwrap()
+                .send(Msg::ExecuteFetch)
+                .unwrap();
         }
 
         self.configure_fonts(ctx);
@@ -54,9 +57,9 @@ impl App for Headlines {
 
             CentralPanel::default()
                 .show(ctx, |ui| {
-                render_header(ui);
+                self.render_header(ui);
                 self.render_news_cards(ctx, ui);
-                render_footer(ui, ctx);
+                self.render_footer(ui, ctx);
             });
         }
         self.render_top_panel(ctx, frame);
@@ -67,38 +70,6 @@ impl App for Headlines {
         "Headlines"
     }
 
-}
-
-fn render_footer(_ui: &mut Ui, ctx: &CtxRef) {
-    TopBottomPanel::bottom("bottom_panel")
-        .min_height(70.)
-        .max_height(70.)
-        .show(ctx, |ui|{
-            ui.vertical_centered(|ui|{
-                ui.add_space(10.);
-                ui.add(Label::new("API fuente: newsapi.org").monospace());
-                ui.add(
-                    Hyperlink::new("https://github.com/emilk/egui")
-                        .text("Hecho con egui")
-                        .text_style(Monospace)
-                );
-                ui.add(
-                    Hyperlink::new("https://github.com/emilk/egui")
-                        .text("oscarricardosan/rust-creativcoder_videos")
-                        .text_style(Monospace)
-                );
-                ui.add_space(10.);
-            });
-        });
-}
-
-fn render_header(ui: &mut Ui) {
-    ui.vertical_centered(|ui| {
-        ui.heading("Headlines");
-    });
-    ui.add_space(headlines::PADDING*5.1);
-    // let sep= Separator::default().spacing(10 as f32);
-    // ui.add(sep);
 }
 
 fn main() {
